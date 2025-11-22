@@ -1,18 +1,27 @@
 import React, { useState } from 'react';
 import { Student } from '../types';
 import { parseRosterFromText } from '../services/geminiService';
-import { Users, Wand2, Plus, Trash2, ArrowRight } from 'lucide-react';
+import { Users, Wand2, Plus, Trash2, ArrowRight, Link2, Settings2 } from 'lucide-react';
 
 interface RosterSetupProps {
   students: Student[];
   setStudents: (students: Student[]) => void;
   onStartSession: () => void;
+  webhookUrl: string;
+  setWebhookUrl: (url: string) => void;
 }
 
-export const RosterSetup: React.FC<RosterSetupProps> = ({ students, setStudents, onStartSession }) => {
+export const RosterSetup: React.FC<RosterSetupProps> = ({ 
+  students, 
+  setStudents, 
+  onStartSession,
+  webhookUrl,
+  setWebhookUrl
+}) => {
   const [inputText, setInputText] = useState('');
   const [isImporting, setIsImporting] = useState(false);
   const [newStudentName, setNewStudentName] = useState('');
+  const [showSettings, setShowSettings] = useState(false);
 
   const handleAiImport = async () => {
     if (!inputText.trim()) return;
@@ -85,7 +94,7 @@ export const RosterSetup: React.FC<RosterSetupProps> = ({ students, setStudents,
         </div>
 
         {/* Current Roster */}
-        <div className="space-y-4 bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col">
+        <div className="space-y-4 bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col h-[400px]">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">Students ({students.length})</h2>
             <button 
@@ -97,7 +106,7 @@ export const RosterSetup: React.FC<RosterSetupProps> = ({ students, setStudents,
             </button>
           </div>
           
-          <div className="flex-1 overflow-y-auto max-h-[300px] space-y-2 pr-2">
+          <div className="flex-1 overflow-y-auto space-y-2 pr-2">
             {students.length === 0 ? (
               <div className="text-center py-8 text-slate-400 italic text-sm">
                 No students added yet.
@@ -134,6 +143,41 @@ export const RosterSetup: React.FC<RosterSetupProps> = ({ students, setStudents,
             </button>
           </form>
         </div>
+      </div>
+
+      {/* Integration Settings Toggle */}
+      <div className="max-w-2xl mx-auto">
+        <button 
+          onClick={() => setShowSettings(!showSettings)}
+          className="flex items-center gap-2 text-slate-500 hover:text-slate-700 text-sm font-medium mx-auto"
+        >
+          <Settings2 size={16} />
+          {showSettings ? 'Hide Integrations' : 'Configure Integrations (Google Sheets/Zapier)'}
+        </button>
+
+        {showSettings && (
+          <div className="mt-4 p-6 bg-slate-100 rounded-xl border border-slate-200 animate-in slide-in-from-top-2">
+             <div className="flex items-start gap-3">
+                <div className="p-2 bg-green-100 text-green-700 rounded-lg">
+                  <Link2 size={20} />
+                </div>
+                <div className="flex-1 space-y-2">
+                  <h3 className="font-semibold text-slate-900">Google Sheets / Zapier Webhook</h3>
+                  <p className="text-xs text-slate-500">
+                    To automatically save attendance to a Google Sheet, create a "Catch Hook" trigger in Zapier (or similar) and paste the URL below. 
+                    Data will be sent as a JSON payload when you finish a session.
+                  </p>
+                  <input 
+                    type="url" 
+                    placeholder="https://hooks.zapier.com/hooks/catch/..." 
+                    className="w-full p-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:border-indigo-500"
+                    value={webhookUrl}
+                    onChange={(e) => setWebhookUrl(e.target.value)}
+                  />
+                </div>
+             </div>
+          </div>
+        )}
       </div>
 
       <div className="flex justify-end pt-4">

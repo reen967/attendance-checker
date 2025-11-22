@@ -2,17 +2,19 @@ import React, { useEffect, useState } from 'react';
 import { SessionData, Student } from '../types';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
 import { generateSessionSummary } from '../services/geminiService';
-import { Download, RefreshCcw, Check, X, Sparkles } from 'lucide-react';
+import { Download, RefreshCcw, Check, X, Sparkles, FileSpreadsheet, ExternalLink } from 'lucide-react';
 
 interface SummaryReportProps {
   session: SessionData;
   students: Student[];
   onReset: () => void;
+  webhookUrl?: string;
 }
 
-export const SummaryReport: React.FC<SummaryReportProps> = ({ session, students, onReset }) => {
+export const SummaryReport: React.FC<SummaryReportProps> = ({ session, students, onReset, webhookUrl }) => {
   const [aiSummary, setAiSummary] = useState<string>('');
   const [isLoadingAi, setIsLoadingAi] = useState(true);
+  const [exportStatus, setExportStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
 
   // Calculate stats
   const stats = students.map(student => {
@@ -23,7 +25,8 @@ export const SummaryReport: React.FC<SummaryReportProps> = ({ session, students,
     return {
       name: student.name,
       checksPresent,
-      finalStatus
+      finalStatus,
+      details: r
     };
   });
 
@@ -39,6 +42,48 @@ export const SummaryReport: React.FC<SummaryReportProps> = ({ session, students,
     };
     fetchSummary();
   }, [session, students]);
+
+  const handleWebhookExport = async () => {
+    if (!webhookUrl) return;
+    setExportStatus('sending');
+
+    const payload = {
+      sessionId: session.sessionId,
+      date: session.date,
+      totalStudents: students.length,
+      presentCount: totalPresent,
+      absentCount: totalAbsent,
+      attendanceRate: `${attendanceRate}%`,
+      aiSummary: aiSummary || "Pending or Failed",
+      studentRecords: stats.map(s => ({
+        name: s.name,
+        status: s.finalStatus,
+        checksPresent: s.checksPresent,
+        check1: s.details.check1,
+        check2: s.details.check2,
+        check3: s.details.check3
+      }))
+    };
+
+    try {
+      // Using text/plain content type helps avoid some CORS preflight issues with Webhooks (like Zapier)
+      // while still sending valid JSON that they can parse.
+      await fetch(webhookUrl, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        headers: {
+          'Content-Type': 'text/plain', 
+        },
+      });
+      setExportStatus('success');
+    } catch (error) {
+      console.error("Export failed", error);
+      // Even if fetch fails due to CORS (opaque response), it might have succeeded on the server.
+      // But usually, it throws. If we use no-cors, we can't read status.
+      // Let's assume error for now if it throws.
+      setExportStatus('error');
+    }
+  };
 
   // Chart Data
   const pieData = [
@@ -169,13 +214,39 @@ export const SummaryReport: React.FC<SummaryReportProps> = ({ session, students,
         </div>
       </div>
 
-      <div className="flex justify-center pt-6">
+      <div className="flex flex-col md:flex-row justify-center items-center gap-4 pt-6 border-t border-slate-200">
         <button 
           onClick={onReset}
           className="px-6 py-3 bg-slate-900 text-white rounded-lg font-medium hover:bg-slate-800 transition-colors flex items-center gap-2"
         >
           <RefreshCcw size={18} /> Start New Session
         </button>
+
+        {webhookUrl && (
+           <button 
+             onClick={handleWebhookExport}
+             disabled={exportStatus === 'sending' || exportStatus === 'success'}
+             className={`
+               px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2 border
+               ${exportStatus === 'success' 
+                 ? 'bg-green-100 text-green-800 border-green-200 cursor-default' 
+                 : exportStatus === 'error'
+                   ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'
+                   : 'bg-white text-green-700 border-green-600 hover:bg-green-50'}
+             `}
+           >
+             {exportStatus === 'idle' && <><FileSpreadsheet size={18} /> Sync to Google Sheets</>}
+             {exportStatus === 'sending' && <><RefreshCcw className="animate-spin" size={18} /> Sending...</>}
+             {exportStatus === 'success' && <><Check size={18} /> Synced Successfully</>}
+             {exportStatus === 'error' && <><X size={18} /> Failed - Retry?</>}
+           </button>
+        )}
+        
+        {!webhookUrl && (
+          <div className="text-xs text-slate-400 flex items-center gap-1">
+            Configure Integrations in Setup to enable Google Sheets sync
+          </div>
+        )}
       </div>
     </div>
   );

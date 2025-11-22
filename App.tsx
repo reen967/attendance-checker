@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Student, SessionData, AppView } from './types';
 import { RosterSetup } from './components/RosterSetup';
 import { ActiveSession } from './components/ActiveSession';
@@ -8,6 +8,15 @@ const App: React.FC = () => {
   const [view, setView] = useState<AppView>('roster');
   const [students, setStudents] = useState<Student[]>([]);
   const [session, setSession] = useState<SessionData | null>(null);
+  
+  // Persistent Webhook URL state for integrations (Zapier/Google Sheets)
+  const [webhookUrl, setWebhookUrl] = useState<string>(() => {
+    return localStorage.getItem('triCheck_webhookUrl') || '';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('triCheck_webhookUrl', webhookUrl);
+  }, [webhookUrl]);
 
   const startSession = () => {
     // Initialize empty records for all students
@@ -67,7 +76,9 @@ const App: React.FC = () => {
           <RosterSetup 
             students={students} 
             setStudents={setStudents} 
-            onStartSession={startSession} 
+            onStartSession={startSession}
+            webhookUrl={webhookUrl}
+            setWebhookUrl={setWebhookUrl}
           />
         )}
 
@@ -85,6 +96,7 @@ const App: React.FC = () => {
             session={session}
             students={students}
             onReset={resetApp}
+            webhookUrl={webhookUrl}
           />
         )}
       </main>
