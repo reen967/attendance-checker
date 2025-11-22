@@ -7,7 +7,8 @@ export interface Student {
 export interface ClassProfile {
   id: string;
   name: string;
-  sheetUrl: string;
+  sheetUrl?: string;       // For classes linked to a live Google Sheet
+  students?: Student[];    // For classes saved locally in the app
 }
 
 export type CheckStatus = 'present' | 'absent' | 'pending';
