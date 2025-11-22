@@ -1,6 +1,13 @@
 export interface Student {
   id: string;
   name: string;
+  photoUrl?: string;
+}
+
+export interface ClassProfile {
+  id: string;
+  name: string;
+  sheetUrl: string;
 }
 
 export type CheckStatus = 'present' | 'absent' | 'pending';

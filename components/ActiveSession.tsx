@@ -84,7 +84,8 @@ export const ActiveSession: React.FC<ActiveSessionProps> = ({ students, sessionD
           <p className="text-slate-500">Perform 3 random checks to track attendance.</p>
         </div>
         <div className="flex items-center gap-4">
-          <div className="text-sm font-medium text-slate-600 bg-slate-100 px-3 py-1 rounded-full">
+          <div className="text-sm font-medium text-slate-600 bg-slate-100 px-3 py-1 rounded-full flex items-center gap-2">
+            <Users size={16} />
             {students.length} Students
           </div>
           <button
@@ -163,23 +164,25 @@ export const ActiveSession: React.FC<ActiveSessionProps> = ({ students, sessionD
       {/* Student List */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex-1 flex flex-col overflow-hidden">
         <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-100 bg-slate-50 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-          <div className="col-span-3">Student Name</div>
-          <div className="col-span-3 text-center">Check 1</div>
-          <div className="col-span-3 text-center">Check 2</div>
-          <div className="col-span-3 text-center">Check 3</div>
+          <div className="col-span-4">Student Name</div>
+          <div className="col-span-8 grid grid-cols-3 text-center">
+            <div>Check 1</div>
+            <div>Check 2</div>
+            <div>Check 3</div>
+          </div>
         </div>
 
         <div className="overflow-y-auto flex-1 p-2 space-y-2">
           {activeCheckNum !== null && (
-             <div className="sticky top-0 z-10 bg-indigo-50 p-2 mb-2 rounded-lg flex justify-between items-center shadow-sm border border-indigo-100">
-               <span className="text-sm font-medium text-indigo-800">
-                 Quick Actions for Check {activeCheckNum}
+             <div className="sticky top-0 z-10 bg-indigo-50 p-2 mb-2 rounded-lg flex justify-between items-center shadow-sm border border-indigo-100 animate-in fade-in slide-in-from-top-1">
+               <span className="text-sm font-medium text-indigo-800 flex items-center gap-2">
+                 <Play size={16} className="fill-indigo-800" /> Check {activeCheckNum} in progress
                </span>
                <div className="flex gap-2">
-                 <button onClick={() => markAll(activeCheckNum as 1|2|3, 'present')} className="text-xs bg-white border border-indigo-200 text-indigo-600 px-3 py-1 rounded hover:bg-indigo-100">
+                 <button onClick={() => markAll(activeCheckNum as 1|2|3, 'present')} className="text-xs bg-white border border-indigo-200 text-indigo-600 px-3 py-1 rounded hover:bg-indigo-100 font-medium">
                     Mark All Present
                  </button>
-                 <button onClick={() => markAll(activeCheckNum as 1|2|3, 'absent')} className="text-xs bg-white border border-red-200 text-red-600 px-3 py-1 rounded hover:bg-red-50">
+                 <button onClick={() => markAll(activeCheckNum as 1|2|3, 'absent')} className="text-xs bg-white border border-red-200 text-red-600 px-3 py-1 rounded hover:bg-red-50 font-medium">
                     Mark All Absent
                  </button>
                </div>
@@ -190,39 +193,45 @@ export const ActiveSession: React.FC<ActiveSessionProps> = ({ students, sessionD
             const record = sessionData.records[student.id];
             return (
               <div key={student.id} className="grid grid-cols-12 gap-4 p-3 items-center hover:bg-slate-50 rounded-lg transition-colors border border-transparent hover:border-slate-100">
-                <div className="col-span-3 font-medium text-slate-700 truncate flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 text-xs">
-                    {student.name.substring(0,2).toUpperCase()}
-                  </div>
-                  {student.name}
-                </div>
-                {[1, 2, 3].map((num) => {
-                  const status = record[`check${num}` as keyof CheckRecord];
-                  const isActive = activeCheckNum === num;
-                  
-                  return (
-                    <div key={num} className="col-span-3 flex justify-center">
-                      <button
-                        onClick={() => isActive && handleToggleStatus(student.id, num as 1|2|3)}
-                        disabled={!isActive}
-                        className={`
-                          w-full max-w-[120px] py-1.5 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2
-                          ${status === 'present' 
-                            ? 'bg-green-100 text-green-700 ring-1 ring-green-200' 
-                            : status === 'absent' 
-                              ? 'bg-red-100 text-red-700 ring-1 ring-red-200' 
-                              : 'bg-slate-100 text-slate-400'}
-                          ${isActive ? 'hover:scale-105 cursor-pointer shadow-sm' : 'cursor-default opacity-80'}
-                        `}
-                      >
-                        {status === 'present' && <CheckCircle2 size={14} />}
-                        {status === 'absent' && <XCircle size={14} />}
-                        {status === 'pending' && <span className="w-2 h-2 rounded-full bg-slate-300"></span>}
-                        <span className="capitalize">{status}</span>
-                      </button>
+                <div className="col-span-4 font-medium text-slate-700 truncate flex items-center gap-4">
+                  {student.photoUrl ? (
+                    <img src={student.photoUrl} alt={student.name} className="w-16 h-16 rounded-full object-cover bg-slate-200 flex-shrink-0 border-2 border-white shadow-sm" />
+                  ) : (
+                    <div className="w-16 h-16 rounded-full bg-slate-200 flex-shrink-0 flex items-center justify-center text-slate-500 text-lg font-bold border-2 border-white shadow-sm">
+                      {student.name.substring(0,2).toUpperCase()}
                     </div>
-                  );
-                })}
+                  )}
+                  <span className="truncate text-base">{student.name}</span>
+                </div>
+                
+                <div className="col-span-8 grid grid-cols-3 gap-2">
+                  {[1, 2, 3].map((num) => {
+                    const status = record[`check${num}` as keyof CheckRecord];
+                    const isActive = activeCheckNum === num;
+                    
+                    return (
+                      <div key={num} className="flex justify-center items-center">
+                        <button
+                          onClick={() => isActive && handleToggleStatus(student.id, num as 1|2|3)}
+                          disabled={!isActive}
+                          className={`
+                            w-full max-w-[100px] h-10 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2
+                            ${status === 'present' 
+                              ? 'bg-green-100 text-green-700 ring-1 ring-green-200' 
+                              : status === 'absent' 
+                                ? 'bg-red-100 text-red-700 ring-1 ring-red-200' 
+                                : 'bg-slate-100 text-slate-400'}
+                            ${isActive ? 'hover:scale-105 cursor-pointer shadow-sm ring-2 ring-offset-1 ring-transparent hover:ring-indigo-200' : 'cursor-default opacity-80'}
+                          `}
+                        >
+                          {status === 'present' && <CheckCircle2 size={20} />}
+                          {status === 'absent' && <XCircle size={20} />}
+                          {status === 'pending' && <span className="w-2 h-2 rounded-full bg-slate-300"></span>}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             );
           })}

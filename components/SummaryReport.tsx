@@ -24,6 +24,7 @@ export const SummaryReport: React.FC<SummaryReportProps> = ({ session, students,
     const finalStatus = checksPresent >= 2 ? 'Present' : 'Absent';
     return {
       name: student.name,
+      photoUrl: student.photoUrl,
       checksPresent,
       finalStatus,
       details: r
@@ -187,7 +188,18 @@ export const SummaryReport: React.FC<SummaryReportProps> = ({ session, students,
               <tbody>
                 {sortedStats.map((stat, idx) => (
                   <tr key={idx} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50">
-                    <td className="px-6 py-4 font-medium text-slate-700">{stat.name}</td>
+                    <td className="px-6 py-4 font-medium text-slate-700">
+                      <div className="flex items-center gap-3">
+                        {stat.photoUrl ? (
+                           <img src={stat.photoUrl} alt={stat.name} className="w-8 h-8 rounded-full object-cover bg-slate-200" />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 text-xs font-bold">
+                            {stat.name.substring(0,2).toUpperCase()}
+                          </div>
+                        )}
+                        {stat.name}
+                      </div>
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex justify-center gap-1">
                          {Array.from({length: stat.checksPresent}).map((_, i) => (
