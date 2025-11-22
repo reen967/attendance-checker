@@ -1,0 +1,5 @@
+{
+  "name": "TriCheck Attendance",
+  "description": "A smart attendance tracking application that utilizes a 3-check system per class. Features AI-powered roster importing and insightful session summaries.",
+  "requestFramePermissions": []
+}
